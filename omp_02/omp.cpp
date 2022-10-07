@@ -50,7 +50,7 @@ int main(  int argc, char *argv[] )
   // This shared array will store either a 0 or 1 for each thread, 0 meaning not congverged
   // 1 meaning converged.
   
-  int *THconverged = new int [  /* TO-DO */ ];
+  int *THconverged = new int [numTH]; // Filled here
   
 
 // =================================================================================== //
@@ -69,13 +69,13 @@ int main(  int argc, char *argv[] )
     //     Upper    = the last   "  "   "    "      "    "  "    "     "   "      "
     // ------------------------------------------------------------------------------------
 
-    int numPerTH = /* TO-DO */ 
-    int Lower    = /* TO-DO */ 
-    int Upper    = /* TO-DO */ 
+    int numPerTH = nField / numTH; 
+    int Lower    = myTH * numPerTH;
+    int Upper    = Lower + numPerTH - 1;
 
     //  (1.1) Adjust Upper for the last (highest numbered) thread to ensure all the rows of the global system are handled
     
-    /* TO-DO  one line */ 
+    if ( myTH == numTH-1 ) Upper = nField-1;
 
     // ------------------------------------------------------------------------------------
     // (2) Aquire memory for this thread
@@ -83,7 +83,7 @@ int main(  int argc, char *argv[] )
     //     nField_TH = the number of field variables (phi) to be handled by this thread
     // ------------------------------------------------------------------------------------
 
-    int nField_TH =  /* TO-DO */ 
+    int nField_TH =  Upper - Lower + 1;
 
     double * * Acoef;
     int    * * Jcoef;
@@ -93,16 +93,16 @@ int main(  int argc, char *argv[] )
     //     Acoef, Jcoef, b, and phiNew are not the global matrices and arrays; here they contain only the
     //     rows being handled by this thread.
     
-    Acoef    = Array2D_double( /* TO-DO */ );
-    Jcoef    = Array2D_int   ( /* TO-DO */ );
-    b        = Array1D_double( /* TO-DO */ );
-    phiNew   = Array1D_double( /* TO-DO */ );
+    Acoef    = Array2D_double(nField_TH,bandwidth);
+    Jcoef    = Array2D_int   (nField_TH,bandwidth);
+    b        = Array1D_double(nField_TH);
+    phiNew   = Array1D_double(nField_TH);
     
     // ------------------------------------------------------------------------------------
     // (3) Initialize the linear system and form the initial guess for phi
     // ------------------------------------------------------------------------------------
 
-    for ( int row = 0 ; row <  /* TO-DO */ ); ++row ) 
+    for ( int row = 0 ; row < nField_TH ); ++row ) 
       {
 	for ( int col = 0 ; col < bandwidth ; ++col )
 	  {

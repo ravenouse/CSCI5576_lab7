@@ -102,7 +102,7 @@ int main(  int argc, char *argv[] )
     // (3) Initialize the linear system and form the initial guess for phi
     // ------------------------------------------------------------------------------------
 
-    for ( int row = 0 ; row < nField_TH ); ++row ) 
+    for ( int row = 0 ; row < nField_TH ; ++row ) 
       {
 	for ( int col = 0 ; col < bandwidth ; ++col )
 	  {
@@ -112,7 +112,7 @@ int main(  int argc, char *argv[] )
 	b[row] = 0.;
       }
     
-    for ( int row = Lower ; row <=  /* TO-DO */  ; ++row ) 
+    for ( int row = Lower ; row <=  Upper  ; ++row ) 
       {
 	phi[row] = 0.;
       }
@@ -122,7 +122,7 @@ int main(  int argc, char *argv[] )
     //     equal to the row number in the linear system, too.
     // ------------------------------------------------------------------------------------
     
-    for ( int pt = /* TO-DO */ ; pt <= Upper ; ++pt ) 
+    for ( int pt = Lower ; pt <= Upper ; ++pt ) 
       {
 
 	// Using the same logic as for converting myPE to iPE and jPE,
@@ -133,26 +133,26 @@ int main(  int argc, char *argv[] )
 
 	// Compute the row number local to this thread, relative to its Acoef/Jcoef arrays
 	
-	int pt_TH = /* TO-DO */
+	int pt_TH = pt - Lower;
 
 	// Populate the linear system for all interior points using that local row number
 
 	if ( i > 0 && i < nPtsx-1 )
 	  if ( j > 0 && j < nPtsy-1 )
 	    {
-	      Acoef[/* TO-DO */][0] = -4./dh/dh;  Jcoef[/* TO-DO */][0] = pt;      
-	      Acoef[/* TO-DO */][1] =  1./dh/dh;  Jcoef[/* TO-DO */][1] = pt - 1;  
-	      Acoef[/* TO-DO */][2] =  1./dh/dh;  Jcoef[/* TO-DO */][2] = pt + 1;  
-	      Acoef[/* TO-DO */][3] =  1./dh/dh;  Jcoef[/* TO-DO */][3] = pt + nPtsx;
-	      Acoef[/* TO-DO */][4] =  1./dh/dh;  Jcoef[/* TO-DO */][4] = pt - nPtsx;
+	      Acoef[pt_TH][0] = -4./dh/dh;  Jcoef[pt_TH][0] = pt;      
+	      Acoef[pt_TH][1] =  1./dh/dh;  Jcoef[pt_TH][1] = pt - 1;  
+	      Acoef[pt_TH][2] =  1./dh/dh;  Jcoef[pt_TH][2] = pt + 1;  
+	      Acoef[pt_TH][3] =  1./dh/dh;  Jcoef[pt_TH][3] = pt + nPtsx;
+	      Acoef[pt_TH][4] =  1./dh/dh;  Jcoef[pt_TH][4] = pt - nPtsx;
 	    }
 
 	// Apply boundary conditions
 	
-	if ( i == 0       ) { Acoef[/* TO-DO */][0] = 1. ; Jcoef[/* TO-DO */][0] = pt; b[/* TO-DO */] =  1.; } 
-	if ( i == nPtsx-1 ) { Acoef[/* TO-DO */][0] = 1. ; Jcoef[/* TO-DO */][0] = pt; b[/* TO-DO */] = -1.; } 
-	if ( j == 0       ) { Acoef[/* TO-DO */][0] = 1. ; Jcoef[/* TO-DO */][0] = pt; b[/* TO-DO */] = -1.; } 
-	if ( j == nPtsy-1 ) { Acoef[/* TO-DO */][0] = 1. ; Jcoef[/* TO-DO */][0] = pt; b[/* TO-DO */] =  1.; } 
+	if ( i == 0       ) { Acoef[pt_TH][0] = 1. ; Jcoef[pt_TH][0] = pt; b[pt_TH] =  1.; } 
+	if ( i == nPtsx-1 ) { Acoef[pt_TH][0] = 1. ; Jcoef[pt_TH][0] = pt; b[pt_TH] = -1.; } 
+	if ( j == 0       ) { Acoef[pt_TH][0] = 1. ; Jcoef[pt_TH][0] = pt; b[pt_TH] = -1.; } 
+	if ( j == nPtsy-1 ) { Acoef[pt_TH][0] = 1. ; Jcoef[pt_TH][0] = pt; b[pt_TH] =  1.; } 
       }
 
     // ------------------------------------------------------------------------------------
@@ -166,50 +166,50 @@ int main(  int argc, char *argv[] )
 
     // numTHconverged counts the number of threads converged.  We do not care which thread initalizes it.
     
-    #pragma omp /* TO-DO */  
+    #pragma omp single
     {
       numTHconverged = 0;
     }
 
     // Iterate until all of the threads have converged or we have exceeded the number of allowed iterations
   
-    while ( /* TO-DO */  && ++iter <= max_iter )  
+    while ( numTHconverged < numTH  && ++iter <= max_iter )  
       {
 	thisThreadConverged = 1;
 
-	for ( /*  Global matrix loop bounds for int row */ )
+	for (int row = 0; row < nField; ++row)
 	  {
-             int row_TH = /* TO-DO: Convert row variable to thread local row */;
+        int row_TH = row - Lower; /* TO-DO: Convert row variable to thread local row */;
 	    
-	      phiNew[row_TH] = b[  /* TO-DO */];
+	      phiNew[row_TH] = b[row_TH];
 	    
-	    for ( int col = 1 ; col < bandwidth ; ++col ) phiNew[ /* TO-DO */] -= Acoef[ /* TO-DO */][col] * phi[ Jcoef[ /* TO-DO */][col] ];  
+	    for ( int col = 1 ; col < bandwidth ; ++col ) phiNew[row_TH] -= Acoef[row_TH][col] * phi[ Jcoef[row_TH][col] ];  
 	    
-	    phiNew[ /* TO-DO */] /= Acoef[ /* TO-DO */][0];
+	    phiNew[row_TH] /= Acoef[row_TH][0];
 	    
-	    if ( fabs(phiNew[ /* TO-DO */] -  phi[row] ) > 1.e-10 ) thisThreadConverged = 0;  
+	    if ( fabs(phiNew[row_TH] -  phi[row] ) > 1.e-10 ) thisThreadConverged = 0;  
 
 	  }
 
 	// (5.1) Record in shared array if this thread converged or not
 	
-	/* To-DO */[myTH] = thisThreadConverged;
+	THconverged[myTH] = thisThreadConverged;
 
 	// (5.2) Count the number of threads that have converged.  We do not care which thread does the counting.
 
-        #pragma omp /* TO-DO */
+        #pragma omp single
 	{
 	  numTHconverged = 0;
-	  for ( int i = 0 ; i < numTH ; ++i ) numTHconverged += /* TO-DO */;
+	  for ( int i = 0 ; i < numTH ; ++i ) numTHconverged += THconverged[i];
 	  if ( numTHconverged == numTH ) printf("Jacobi converged in %d iterations.",iter);
 	}
 
 	// (5.3) Update the shared/global array phi with this thread's values
 	
-	for ( /*  Global matrix loop bounds for int row */ )    
+	for (int row = 0; row < nField; ++row)    
 	  {
-	    int row_TH = /* TO-DO:  Convert row variable to thread local row */;
-	    phi[row] = phiNew[ /* TO-DO */]; 
+	    int row_TH = row - Lower;
+	    phi[row] = phiNew[row_TH]; 
 	  }
       }
 
